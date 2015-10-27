@@ -13,18 +13,14 @@ import (
 func TestAnnotateContext(t *testing.T) {
 	ctx := context.Background()
 
-	request, _ := http.NewRequest("GET", "http://localhost", nil)
+	request, _ := http.NewRequest("GET", "http://www.example.com", nil)
 	request.Header = http.Header{}
-	annotated := runtime.AnnotateContext(ctx, request)
-	if annotated != ctx {
-		t.Errorf("AnnotateContext(ctx, request) = %v; want %v", annotated, ctx)
-	}
 	request.Header.Add("Grpc-Metadata-FooBar", "Value1")
 	request.Header.Add("Grpc-Metadata-Foo-BAZ", "Value2")
-	annotated = runtime.AnnotateContext(ctx, request)
+	annotated := runtime.AnnotateContext(ctx, request)
 	md, ok := metadata.FromContext(annotated)
-	if !ok || len(md) != 2 {
-		t.Errorf("Expected 2 metadata items in context; got %v", md)
+	if !ok || len(md) != 3 {
+		t.Errorf("Expected 3 metadata items in context; got %v", md)
 	}
 	if got, want := md["Foobar"], []string{"Value1"}; !reflect.DeepEqual(got, want) {
 		t.Errorf("md[\"Foobar\"] = %v; want %v", got, want)
@@ -37,15 +33,10 @@ func TestAnnotateContext(t *testing.T) {
 func TestAnnotateContextPassesNonGrpcMetadata(t *testing.T) {
 	ctx := context.Background()
 
-	request, _ := http.NewRequest("GET", "http://localhost", nil)
+	request, _ := http.NewRequest("GET", "http://bar.foo.example.com", nil)
 	request.Header = http.Header{}
-	annotated := runtime.AnnotateContext(ctx, request)
-	if annotated != ctx {
-		t.Errorf("AnnotateContext(ctx, request) = %v; want %v", annotated, ctx)
-	}
-	request.Header.Add("Host", "bar.foo.example.com")
 	request.Header.Add("Authorization", "Bearer FAKETOKEN")
-	annotated = runtime.AnnotateContext(ctx, request)
+	annotated := runtime.AnnotateContext(ctx, request)
 	md, ok := metadata.FromContext(annotated)
 	if !ok || len(md) != 2 {
 		t.Errorf("Expected 2 metadata items in context; got %v", md)

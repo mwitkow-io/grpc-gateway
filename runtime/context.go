@@ -25,11 +25,10 @@ func AnnotateContext(ctx context.Context, req *http.Request) context.Context {
 		if key == "Authorization" {
 			pairs = append(pairs, "authorization", val[0])
 		}
-		if key == "Host" {
-			pairs = append(pairs, "host", val[0])
-		}
 	}
-
+	if req.Host != "" {
+		pairs = append(pairs, "host", req.Host)
+	}
 	if len(pairs) != 0 {
 		ctx = metadata.NewContext(ctx, metadata.Pairs(pairs...))
 	}
