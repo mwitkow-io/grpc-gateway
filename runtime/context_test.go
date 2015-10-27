@@ -33,3 +33,27 @@ func TestAnnotateContext(t *testing.T) {
 		t.Errorf("md[\"Foo-Baz\"] = %v want %v", got, want)
 	}
 }
+
+func TestAnnotateContextPassesNonGrpcMetadata(t *testing.T) {
+	ctx := context.Background()
+
+	request, _ := http.NewRequest("GET", "http://localhost", nil)
+	request.Header = http.Header{}
+	annotated := runtime.AnnotateContext(ctx, request)
+	if annotated != ctx {
+		t.Errorf("AnnotateContext(ctx, request) = %v; want %v", annotated, ctx)
+	}
+	request.Header.Add("Host", "bar.foo.example.com")
+	request.Header.Add("Authorization", "Bearer FAKETOKEN")
+	annotated = runtime.AnnotateContext(ctx, request)
+	md, ok := metadata.FromContext(annotated)
+	if !ok || len(md) != 2 {
+		t.Errorf("Expected 2 metadata items in context; got %v", md)
+	}
+	if got, want := md["host"], []string{"bar.foo.example.com"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("md[\"host\"] = %v; want %v", got, want)
+	}
+	if got, want := md["authorization"], []string{"Bearer FAKETOKEN"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("md[\"authorization\"] = %v want %v", got, want)
+	}
+}
