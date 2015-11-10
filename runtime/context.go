@@ -8,7 +8,11 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-const metadataHeaderPrefix = "Grpc-Metadata-"
+const (
+	metadataHeaderPrefix = "Grpc-Metadata-"
+	xForwardedFor = "X-Forwarded-For"
+	xForwardedHost = "X-Forwarded-Host"
+)
 
 /*
 AnnotateContext adds context information such as metadata from the request.
@@ -26,9 +30,17 @@ func AnnotateContext(ctx context.Context, req *http.Request) context.Context {
 			pairs = append(pairs, "authorization", val[0])
 		}
 	}
-	if req.Host != "" {
-		pairs = append(pairs, "host", req.Host)
+	if req.Header.Get(xForwardedHost) != "" {
+		pairs = append(pairs, strings.ToLower(xForwardedHost), req.Header.Get(xForwardedHost))
+	} else if req.Host != "" {
+		pairs = append(pairs, strings.ToLower(xForwardedHost), req.Host)
 	}
+	if req.Header.Get(xForwardedFor) == "" {
+		pairs = append(pairs, strings.ToLower(xForwardedFor), req.RemoteAddr)
+	} else {
+		pairs = append(pairs, strings.ToLower(xForwardedFor), req.Header.Get(xForwardedFor) + ", " + req.RemoteAddr)
+	}
+
 	if len(pairs) != 0 {
 		ctx = metadata.NewContext(ctx, metadata.Pairs(pairs...))
 	}
