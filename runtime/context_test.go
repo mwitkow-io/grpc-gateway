@@ -17,7 +17,7 @@ func TestAnnotateContext(t *testing.T) {
 	request.Header = http.Header{}
 	request.Header.Add("Grpc-Metadata-FooBar", "Value1")
 	request.Header.Add("Grpc-Metadata-Foo-BAZ", "Value2")
-	request.RemoteAddr = "192.168.0.1"
+	request.RemoteAddr = "192.168.0.1:12345"
 	annotated := runtime.AnnotateContext(ctx, request)
 	md, ok := metadata.FromContext(annotated)
 	if !ok || len(md) != 4 {
@@ -38,7 +38,7 @@ func TestAnnotateContextPassesNonGrpcMetadata(t *testing.T) {
 	request.Header = http.Header{}
 	request.Header.Add("Authorization", "Bearer FAKETOKEN")
 	request.Header.Add("X-Forwarded-For", "8.8.8.8")
-	request.RemoteAddr = "192.168.0.100"
+	request.RemoteAddr = "192.168.0.100:12345"
 	annotated := runtime.AnnotateContext(ctx, request)
 	md, ok := metadata.FromContext(annotated)
 	if !ok || len(md) != 3 {

@@ -6,6 +6,7 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
+	"net"
 )
 
 const (
@@ -35,10 +36,13 @@ func AnnotateContext(ctx context.Context, req *http.Request) context.Context {
 	} else if req.Host != "" {
 		pairs = append(pairs, strings.ToLower(xForwardedHost), req.Host)
 	}
-	if req.Header.Get(xForwardedFor) == "" {
-		pairs = append(pairs, strings.ToLower(xForwardedFor), req.RemoteAddr)
-	} else {
-		pairs = append(pairs, strings.ToLower(xForwardedFor), req.Header.Get(xForwardedFor) + ", " + req.RemoteAddr)
+	remoteIp, _, err := net.SplitHostPort(req.RemoteAddr)
+	if err == nil {
+		if req.Header.Get(xForwardedFor) == "" {
+			pairs = append(pairs, strings.ToLower(xForwardedFor), remoteIp)
+		} else {
+			pairs = append(pairs, strings.ToLower(xForwardedFor), req.Header.Get(xForwardedFor) + ", " + remoteIp)
+		}
 	}
 
 	if len(pairs) != 0 {
